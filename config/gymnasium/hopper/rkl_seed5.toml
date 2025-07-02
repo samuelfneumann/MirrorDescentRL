@@ -1,0 +1,99 @@
+[config]
+save_dir = "gymnasium/hopper/rkl_seed4"
+save_backend = "jld2"
+exp_file = "./experiment/gymnasium.jl"
+exp_module_name = "GymnasiumExperiment"
+exp_func_name = "main_experiment"
+arg_iter_type = "iterV2"
+
+####################################################################
+# Static Args
+####################################################################
+[static_args]
+steps = 1000000
+
+####################################################################
+# Environment
+####################################################################
+[static_args.env]
+name = "Hopper"
+version = 4
+step_limit = 1000
+
+[static_args.env.kwargs]
+"γ" = 0.99
+
+####################################################################
+# Agent
+####################################################################
+[sweep_args.agent]
+"τ" = [1e-4, 1e-3, 1e-2, 1e-1, 1e0]
+
+[static_args.agent]
+type = "BatchQAgent"
+batch_size = 256
+steps_before_learning = 10000
+actor_update_ratio = [10, 10]
+critic_update_ratio = [1, 1]
+device = "cpu"
+
+[static_args.agent.actor]
+
+[static_args.agent.actor.policy]
+type = "ArctanhNormalPolicy"
+
+[static_args.agent.actor.policy.approx]
+type = "Lux"
+init = "glorot_uniform"
+act = ["relu", "relu"]
+hidden = [256, 256]
+
+[static_args.agent.actor.optim]
+type = "Adam"
+
+[sweep_args.agent.actor.optim]
+"η_scale" = [1e-1]
+
+[static_args.agent.actor.update]
+type = "ContinuousRKL"
+reparam = false
+baseline_actions = 30
+num_samples = 1
+
+[static_args.agent.critic]
+
+[static_args.agent.critic.value_fn]
+type = "Q"
+n = 1
+
+[static_args.agent.critic.value_fn.approx]
+type = "Lux"
+init = "glorot_uniform"
+act = ["relu", "relu"]
+hidden = [256, 256]
+
+[static_args.agent.critic.optim]
+type = "Adam"
+
+[sweep_args.agent.critic.optim]
+"η" = [1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
+
+[static_args.agent.critic.update]
+type = "Sarsa"
+regularisers = [
+    {type = "EntropyBellmanRegulariser"},
+]
+
+[static_args.agent.buffer]
+type = "ExperienceReplay"
+capacity = 1000000
+
+[static_args.agent.target]
+polyak = 0.01
+refresh_interval = 1
+
+####################################################################
+# Sweep Args
+####################################################################
+[sweep_args]
+seed = "26:30"

@@ -1,0 +1,103 @@
+[config]
+save_dir = "discrete_classic_control/pendulum/proximal_mdmpo_forward"
+save_backend = "jld2"
+exp_file = "./experiment/discrete_default.jl"
+exp_module_name = "DefaultDiscreteExperiment"
+exp_func_name = "main_experiment"
+arg_iter_type = "iterV2"
+
+####################################################################
+# Static Args
+####################################################################
+[static_args]
+steps = 50000
+
+####################################################################
+# Environment
+####################################################################
+[static_args.env]
+type = "Pendulum"
+step_limit = 1000
+
+[static_args.env.kwargs]
+"γ" = 0.99
+continuous = false
+
+####################################################################
+# Agent
+####################################################################
+[sweep_args.agent]
+"λ" = [1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3]
+
+[static_args.agent]
+type = "BatchQAgent"
+batch_size = 32
+steps_before_learning = 1000
+actor_update_ratio = [10, 10]
+critic_update_ratio = [1, 1]
+device = "cpu"
+num_md_updates = 10
+forward_direction = true
+"τ" = 0e0
+
+[static_args.agent.actor]
+
+[static_args.agent.actor.policy]
+type = "SoftmaxPolicy"
+
+[static_args.agent.actor.policy.approx]
+type = "Lux"
+init = "glorot_uniform"
+act = ["relu", "relu"]
+hidden = [32, 32]
+
+[static_args.agent.actor.optim]
+type = "Adam"
+
+[sweep_args.agent.actor.optim]
+"η_scale" = [1e-1, 1e0, 1e1]
+
+[static_args.agent.actor.update]
+type = "DiscreteProximalMDMPO"
+use_baseline = true
+
+[sweep_args.agent.actor.update]
+kl_policy_coeff = [1e-3, 1e-2, 1e-1]
+
+[static_args.agent.critic]
+
+[static_args.agent.critic.value_fn]
+type = "Q"
+n = 1
+
+[static_args.agent.critic.value_fn.approx]
+type = "Lux"
+init = "glorot_uniform"
+act = ["relu", "relu"]
+hidden = [32, 32]
+
+[static_args.agent.critic.optim]
+type = "Adam"
+
+[sweep_args.agent.critic.optim]
+"η" = [1e-4, 1e-3, 1e-2]
+
+[static_args.agent.critic.update]
+type = "Sarsa"
+regularisers = [
+    {type = "EntropyBellmanRegulariser"},
+]
+
+[static_args.agent.buffer]
+type = "ExperienceReplay"
+capacity = 100000
+
+[static_args.agent.target]
+polyak = 0.01
+refresh_interval = 1
+
+####################################################################
+# Sweep Args
+####################################################################
+[sweep_args]
+seed = "1:50"
